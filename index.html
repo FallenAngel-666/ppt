@@ -700,14 +700,15 @@
 
           <div class="card-clean">
             <div class="card-header-line">
-              <span class="card-icon">🌐</span>
-              <span class="card-title">Cross-Platform Ready</span>
+              <span class="card-icon">📦</span>
+              <span class="card-title">Delivery Package</span>
             </div>
             <ul class="card-bullets">
-              <li><strong>Android APK</strong> (7.9 MB Room DB) + <strong>Offline Web Bluetooth</strong>.</li>
-              <li>FastAPI gateway station on port 8000 with real-time GIS map.</li>
+              <li><strong>To be provided upon software delivery:</strong></li>
+              <li>• Android APK client with local Room SQLite storage.</li>
+              <li>• Offline Web Bluetooth app & FastAPI GIS command station.</li>
             </ul>
-            <div class="card-tag">DEPLOYED MVP</div>
+            <div class="card-tag">DELIVERY PACKAGE</div>
           </div>
         </div>
 
@@ -838,20 +839,21 @@
 
           <div class="card-clean">
             <div class="card-header-line">
-              <span class="card-icon">🧪</span>
-              <span class="card-title">3. Production MVP Ready</span>
+              <span class="card-icon">📦</span>
+              <span class="card-title">3. Delivery Package</span>
             </div>
             <ul class="card-bullets">
-              <li>Native Kotlin APK (7.9 MB), Room SQLite, and FastAPI local gateway.</li>
-              <li><strong>13 automated test suites passed</strong>; verified on 3-phone daisy chains.</li>
+              <li><strong>Target handover package upon project delivery:</strong></li>
+              <li>• Native Android Kotlin APK client (Room SQLite).</li>
+              <li>• FastAPI local gateway station & automated verification suite.</li>
             </ul>
-            <div class="card-tag">100% OPERATIONAL</div>
+            <div class="card-tag">HANDOVER PACKAGE</div>
           </div>
         </div>
 
         <div class="highlight-banner" style="margin-top: 1rem;">
-          <span>🚀</span>
-          <div><strong>Feasibility Confirmed:</strong> Zero theoretical conjecture. Fully functional edge architecture verified in real physical multi-phone daisy chains.</div>
+          <span>📦</span>
+          <div><strong>Delivery Architecture:</strong> Full software handover package to be delivered, including compiled Android client APK, offline web app, FastAPI gateway station, and verification test protocol.</div>
         </div>
       </div>
 
@@ -1039,12 +1041,12 @@
     <div class="footer-left">
       <div class="footer-status-pill">
         <div class="status-dot"></div>
-        <span>MESH ENGINE OPERATIONAL</span>
+        <span>MESH SPECIFICATION</span>
       </div>
       <span>•</span>
-      <span>Sub-5ms AI Micro-Logistics Active</span>
+      <span>Sub-5ms AI Micro-Logistics Engine</span>
       <span>•</span>
-      <span>ECDSA NIST P-256 Enabled</span>
+      <span>ECDSA NIST P-256 Security Architecture</span>
     </div>
 
     <div class="footer-keys">
@@ -1058,7 +1060,7 @@
 
   <script>
     /* ==========================================================================
-       ECHONET 3.0 ENGINE: ENLARGED WHEEL WITH CONTINUOUS IDLE ROTATION
+       ECHONET 3.0 ENGINE: ENLARGED WHEEL WITH FIXED LABELS & CONTINUOUS IDLE ROTATION
        ========================================================================== */
 
     const SLIDES = [
@@ -1102,7 +1104,7 @@
         id: 4,
         shortTitle: "Tech Stack",
         fullTitle: "Technical Approach",
-        subtitle: "Sub-5ms Edge AI, ECDSA P-256 Integrity & Verified MVP",
+        subtitle: "Sub-5ms Edge AI, ECDSA P-256 Integrity & Planned Deliverables",
         tag: "TOPIC 04 • ENGINEERING & EDGE AI",
         primaryColor: "#059669",
         accentColor: "#10B981",
@@ -1151,7 +1153,7 @@
     let currentSlideIndex = 0;
     let currentWheelRotation = 0;
     let isAmbientSpinning = true;
-    let ambientSpeed = 0.08; // Very slow, graceful continuous rotation (~4.8 deg/sec)
+    let ambientSpeed = 0.08;
     let animationFrameId = null;
     let isTransitioning = false;
     let audioEnabled = true;
@@ -1207,7 +1209,7 @@
       ].join(" ");
     }
 
-    // Render the Enlarged SVG Wheel Sectors
+    // Render the SVG Wheel with RIGID NON-OVERLAPPING LABELS
     function initWheelSVG() {
       const group = document.getElementById("wheelSlicesGroup");
       group.innerHTML = "";
@@ -1233,40 +1235,52 @@
         path.setAttribute("opacity", "0.92");
         g.appendChild(path);
 
-        // Center calculation for Text & Number
+        // Center point for Text
         const textPos = polarToCartesian(0, 0, (INNER_RADIUS + OUTER_RADIUS) / 2, midAngle);
 
-        // Number label (01, 02...)
+        // Group container that locks the 2 lines together so they NEVER overlap
+        const labelG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        
+        // Orientation angle
+        let rot = midAngle;
+        let flip = false;
+        if (rot > 90 && rot < 270) {
+          rot += 180;
+          flip = true;
+        }
+        labelG.setAttribute("transform", `rotate(${rot}, ${textPos.x}, ${textPos.y})`);
+
+        // If flipped, invert offsets to keep Number ALWAYS at the top and Title ALWAYS below it
+        const numY = flip ? (textPos.y + 7) : (textPos.y - 7);
+        const titleY = flip ? (textPos.y - 11) : (textPos.y + 11);
+
+        // Number (01, 02...)
         const textNum = document.createElementNS("http://www.w3.org/2000/svg", "text");
         textNum.setAttribute("x", textPos.x);
-        textNum.setAttribute("y", textPos.y - 6);
+        textNum.setAttribute("y", numY);
         textNum.setAttribute("text-anchor", "middle");
+        textNum.setAttribute("dominant-baseline", "central");
         textNum.setAttribute("fill", "#FFFFFF");
         textNum.setAttribute("font-size", "17px");
         textNum.setAttribute("font-weight", "900");
         textNum.setAttribute("font-family", "JetBrains Mono, monospace");
         textNum.textContent = `0${slide.id}`;
+        labelG.appendChild(textNum);
 
-        let rotationAngle = midAngle;
-        if (rotationAngle > 90 && rotationAngle < 270) {
-          rotationAngle += 180;
-        }
-        textNum.setAttribute("transform", `rotate(${rotationAngle}, ${textPos.x}, ${textPos.y - 6})`);
-        g.appendChild(textNum);
-
-        // Short Title Label
+        // Short Title (OVERVIEW, SOLUTION, IMPACT...)
         const textTitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
         textTitle.setAttribute("x", textPos.x);
-        textTitle.setAttribute("y", textPos.y + 12);
+        textTitle.setAttribute("y", titleY);
         textTitle.setAttribute("text-anchor", "middle");
+        textTitle.setAttribute("dominant-baseline", "central");
         textTitle.setAttribute("fill", "#FFFFFF");
-        textTitle.setAttribute("font-size", "11px");
+        textTitle.setAttribute("font-size", "10.5px");
         textTitle.setAttribute("font-weight", "700");
         textTitle.setAttribute("font-family", "Inter, sans-serif");
         textTitle.textContent = slide.shortTitle.toUpperCase();
-        textTitle.setAttribute("transform", `rotate(${rotationAngle}, ${textPos.x}, ${textPos.y + 12})`);
-        g.appendChild(textTitle);
+        labelG.appendChild(textTitle);
 
+        g.appendChild(labelG);
         group.appendChild(g);
       });
     }
@@ -1276,14 +1290,12 @@
       if (isAmbientSpinning && !isTransitioning) {
         currentWheelRotation += ambientSpeed;
         const wheel = document.getElementById("interactiveWheel");
-        wheel.style.transition = "none"; // Direct frame transform for smooth physics
+        wheel.style.transition = "none";
         wheel.style.transform = `rotate(${currentWheelRotation}deg)`;
 
-        // Find which sector is currently closest to the top needle (12 o'clock = 0 deg)
         let normalized = ((-currentWheelRotation) % 360 + 360) % 360;
         let activeIdx = Math.round(normalized / SLICE_ANGLE) % TOTAL_SLICES;
 
-        // Keep hub indicator aligned with whichever sector is passing under top needle
         const currentPassingSlide = SLIDES[activeIdx];
         document.getElementById("hubNumber").textContent = `0${currentPassingSlide.id}`;
         document.getElementById("hubNumber").style.color = currentPassingSlide.primaryColor;
@@ -1292,14 +1304,13 @@
       animationFrameId = requestAnimationFrame(runAmbientLoop);
     }
 
-    // Select Topic on Slice Click (Stops Ambient Spin & Aligns Exact Slice Under Needle)
+    // Select Topic on Slice Click
     function selectTopic(targetIndex) {
       if (targetIndex < 0) targetIndex = TOTAL_SLICES - 1;
       if (targetIndex >= TOTAL_SLICES) targetIndex = 0;
 
       playClickSound();
 
-      // Pause ambient spin so user can inspect this topic
       isAmbientSpinning = false;
       updateSpinButtonState();
       isTransitioning = true;
@@ -1307,19 +1318,16 @@
       currentSlideIndex = targetIndex;
       const slide = SLIDES[targetIndex];
 
-      // Calculate shortest rotational path so slice aligns directly at 12 o'clock needle
       const targetDeg = -(targetIndex * SLICE_ANGLE);
       let diff = (targetDeg - currentWheelRotation) % 360;
       if (diff > 180) diff -= 360;
       if (diff < -180) diff += 360;
       currentWheelRotation += diff;
 
-      // Animate smoothly to target angle
       const wheel = document.getElementById("interactiveWheel");
       wheel.style.transition = "transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1)";
       wheel.style.transform = `rotate(${currentWheelRotation}deg)`;
 
-      // Update Hub & Colors
       document.getElementById("hubNumber").textContent = `0${slide.id}`;
       document.getElementById("hubNumber").style.color = slide.primaryColor;
       document.getElementById("hubLabel").textContent = slide.shortTitle.toUpperCase();
@@ -1330,13 +1338,11 @@
       document.documentElement.style.setProperty('--theme-glow', slide.glowColor);
       document.documentElement.style.setProperty('--theme-bg-tint', slide.bgTint);
 
-      // Update Header Text
       document.getElementById("slideIndicator").textContent = `SLIDE 0${slide.id} / 0${TOTAL_SLICES}`;
       document.getElementById("slideTag").textContent = slide.tag;
       document.getElementById("slideTitle").textContent = slide.fullTitle;
       document.getElementById("slideSubtitle").textContent = slide.subtitle;
 
-      // Highlight active sector in SVG
       SLIDES.forEach((_, idx) => {
         const sector = document.getElementById(`wheel-sector-${idx}`);
         if (sector) {
@@ -1352,7 +1358,6 @@
         }
       });
 
-      // Switch Slide Content
       document.querySelectorAll(".slide-body").forEach((el, idx) => {
         if (idx === targetIndex) {
           el.classList.add("active");
@@ -1366,7 +1371,6 @@
       }, 850);
     }
 
-    // Toggle Ambient Spin
     function toggleAmbientSpin() {
       isAmbientSpinning = !isAmbientSpinning;
       updateSpinButtonState();
@@ -1383,7 +1387,6 @@
       }
     }
 
-    // Fullscreen Toggle
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(err => {});
@@ -1392,7 +1395,6 @@
       }
     }
 
-    // Local Storage for Team Name persistence
     const teamInput = document.getElementById("teamNameInput");
     const savedTeam = localStorage.getItem("echonet_pro_team_name");
     if (savedTeam) teamInput.value = savedTeam;
@@ -1400,7 +1402,6 @@
       localStorage.setItem("echonet_pro_team_name", e.target.value);
     });
 
-    // Keyboard Controls
     window.addEventListener("keydown", (e) => {
       if (document.activeElement === teamInput) return;
 
@@ -1417,7 +1418,6 @@
       }
     });
 
-    // Button event listeners
     document.getElementById("btnPrevSlide").addEventListener("click", () => selectTopic(currentSlideIndex - 1));
     document.getElementById("btnNextSlide").addEventListener("click", () => selectTopic(currentSlideIndex + 1));
     document.getElementById("btnSpinToggle").addEventListener("click", toggleAmbientSpin);
@@ -1428,7 +1428,6 @@
       document.getElementById("btnAudioToggle").style.opacity = audioEnabled ? "1" : "0.5";
     });
 
-    // Initialize Wheel on Load
     initWheelSVG();
     selectTopic(0);
     runAmbientLoop();
