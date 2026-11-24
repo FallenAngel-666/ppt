@@ -665,7 +665,7 @@
             <span>TEAM IDENTITY (CLICK TO EDIT)</span>
             <span style="font-size: 0.68rem; color: #64748B;">✏️ Auto-saved</span>
           </div>
-          <input type="text" class="team-name-input" id="teamNameInput" value="Team EchoNet • Disaster Systems Innovation" placeholder="Click to enter your team name...">
+          <input type="text" class="team-name-input" id="teamNameInput" value="ARES" placeholder="ARES">
           <div class="team-pills">
             <span class="team-pill-item">Mesh Protocol Architecture</span>
             <span class="team-pill-item">Sub-5ms Edge AI Micro-Logistics</span>
@@ -1396,10 +1396,10 @@
     }
 
     const teamInput = document.getElementById("teamNameInput");
-    const savedTeam = localStorage.getItem("echonet_pro_team_name");
+    const savedTeam = localStorage.getItem("echonet_ares_team_name");
     if (savedTeam) teamInput.value = savedTeam;
     teamInput.addEventListener("input", (e) => {
-      localStorage.setItem("echonet_pro_team_name", e.target.value);
+      localStorage.setItem("echonet_ares_team_name", e.target.value);
     });
 
     window.addEventListener("keydown", (e) => {
