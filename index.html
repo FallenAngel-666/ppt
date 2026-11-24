@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EchoNet 3.0 — Offline Disaster Communication & Micro-Logistics</title>
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      
+      /* Light Clean Theme */
+      --canvas-bg: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --card-border: #E2E8F0;
+      --text-main: #0F172A;
+      --text-muted: #475569;
+      --text-dim: #94A3B8;
+      
+      /* Dynamic Theme Variables */
+      --theme-primary: #0284C7;
+      --theme-accent: #0EA5E9;
+      --theme-light: rgba(2, 132, 199, 0.08);
+      --theme-glow: rgba(2, 132, 199, 0.2);
+      --theme-bg-tint: radial-gradient(circle at 75% 25%, rgba(2, 132, 199, 0.05) 0%, rgba(248, 250, 252, 1) 70%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--canvas-bg);
+      color: var(--text-main);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.5s ease;
+    }
+
+    /* Subtle Ambient Tint */
+    .ambient-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--theme-bg-tint);
+      z-index: 0;
+      pointer-events: none;
+      transition: background 0.5s ease;
+    }
+
+    /* Header Bar */
+    header {
+      position: relative;
+      z-index: 20;
+      height: 56px;
+      padding: 0 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--theme-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px var(--theme-glow);
+      transition: all 0.4s ease;
+    }
+
+    .brand-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: #FFFFFF;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 12px;
+      background: var(--theme-light);
+      color: var(--theme-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid var(--theme-primary);
+      transition: all 0.4s ease;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--theme-primary);
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 16px;
+      background: var(--theme-light);
+      border: 1px solid var(--theme-primary);
+      transition: all 0.4s ease;
+    }
+
+    .btn-ctrl {
+      background: #FFFFFF;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-ctrl:hover, .btn-ctrl.active {
+      background: var(--theme-light);
+      color: var(--theme-primary);
+      border-color: var(--theme-primary);
+    }
+
+    /* Main Workspace */
+    main {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: flex;
+      padding: 1.25rem 2.5rem;
+      gap: 2.25rem;
+      height: calc(100vh - 56px - 40px);
+      align-items: center;
+    }
+
+    /* Left Slide Card Viewport */
+    .slide-viewport {
+      flex: 1.35;
+      height: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-top: 4px solid var(--theme-primary);
+      border-radius: 16px;
+      padding: 2rem 2.25rem;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.03);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      transition: border-top-color 0.4s ease;
+    }
+
+    /* Slide Header */
+    .slide-header {
+      margin-bottom: 1.2rem;
+      border-bottom: 1px solid #F1F5F9;
+      padding-bottom: 0.8rem;
+    }
+
+    .slide-tag {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--theme-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slide-tag::before {
+      content: '';
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--theme-primary);
+    }
+
+    .slide-title {
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1.15;
+      color: #0F172A;
+      letter-spacing: -0.025em;
+    }
+
+    .slide-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+      font-weight: 400;
+    }
+
+    /* Slide Content Bodies */
+    .slide-body {
+      flex: 1;
+      display: none;
+      animation: fadeInSlide 0.35s ease forwards;
+    }
+
+    .slide-body.active {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+
+    @keyframes fadeInSlide {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 3 Clean Modern Cards */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .card-clean {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 1.15rem;
+      position: relative;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-clean:hover {
+      background: #FFFFFF;
+      border-color: var(--theme-primary);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      transform: translateY(-2px);
+    }
+
+    .card-header-line {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 0.55rem;
+    }
+
+    .card-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0F172A;
+    }
+
+    .card-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 0.88rem;
+      color: #334155;
+      line-height: 1.45;
+    }
+
+    .card-bullets li {
+      position: relative;
+      padding-left: 13px;
+    }
+
+    .card-bullets li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: var(--theme-primary);
+      font-weight: bold;
+    }
+
+    .card-bullets strong {
+      color: #0F172A;
+    }
+
+    .card-tag {
+      margin-top: auto;
+      padding-top: 0.55rem;
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--theme-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Highlight Bottom Banner */
+    .highlight-banner {
+      background: var(--theme-light);
+      border-left: 4px solid var(--theme-primary);
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1.1rem;
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      color: #0F172A;
+      line-height: 1.4;
+    }
+
+    .highlight-banner strong {
+      color: var(--theme-primary);
+    }
+
+    /* Slide 1 Editable Team Box */
+    .team-box-clean {
+      background: #FFFFFF;
+      border: 1.5px dashed var(--theme-primary);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.3rem;
+      box-shadow: 0 2px 8px var(--theme-glow);
+    }
+
+    .team-box-label {
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--theme-primary);
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 3px;
+    }
+
+    .team-name-input {
+      background: transparent;
+      border: none;
+      color: #0F172A;
+      font-size: 1.35rem;
+      font-weight: 800;
+      width: 100%;
+      outline: none;
+      font-family: var(--font-sans);
+    }
+
+    .team-pills {
+      margin-top: 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .team-pill-item {
+      background: var(--theme-light);
+      border: 1px solid var(--theme-primary);
+      color: var(--theme-primary);
+      padding: 2px 8px;
+      border-radius: 14px;
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       RIGHT SIDE: ENLARGED ROTATING WHEEL WITH CONTINUOUS IDLE ROTATION
+       ========================================================================== */
+    .wheel-viewport {
+      flex: 1.15;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Enlarged Wheel Container */
+    .wheel-container {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Outer Compass Ring */
+    .wheel-outer-ring {
+      position: absolute;
+      width: 516px;
+      height: 516px;
+      border-radius: 50%;
+      border: 1.5px dashed #CBD5E1;
+      pointer-events: none;
+    }
+
+    /* Top Needle at 12 o'clock */
+    .wheel-pointer {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 24px solid var(--theme-primary);
+      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
+      transition: border-top-color 0.4s ease;
+    }
+
+    .wheel-pointer::after {
+      content: '';
+      position: absolute;
+      top: -26px;
+      left: -5px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+    }
+
+    /* The SVG Wheel */
+    .svg-wheel {
+      width: 100%;
+      height: 100%;
+      transform-origin: 50% 50%;
+      cursor: pointer;
+      filter: drop-shadow(0 10px 24px rgba(15, 23, 42, 0.08));
+    }
+
+    .wheel-sector {
+      cursor: pointer;
+      transition: filter 0.2s ease, opacity 0.2s ease;
+    }
+
+    .wheel-sector:hover {
+      filter: brightness(1.1) drop-shadow(0 0 6px rgba(0,0,0,0.12));
+    }
+
+    /* Center Hub */
+    .wheel-center-hub {
+      position: absolute;
+      width: 154px;
+      height: 154px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 4px solid var(--theme-primary);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 25;
+      pointer-events: none;
+      transition: border-color 0.4s ease;
+      text-align: center;
+    }
+
+    .hub-number {
+      font-family: var(--font-mono);
+      font-size: 2.3rem;
+      font-weight: 900;
+      color: var(--theme-primary);
+      line-height: 1;
+      transition: color 0.4s ease;
+    }
+
+    .hub-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748B;
+      margin-top: 3px;
+    }
+
+    /* Controls Below Wheel */
+    .wheel-controls {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wheel-hint {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .wheel-nav-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-nav {
+      background: #FFFFFF;
+      border: 1px solid var(--card-border);
+      color: #0F172A;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover {
+      background: var(--theme-primary);
+      color: #FFFFFF;
+      border-color: var(--theme-primary);
+      transform: scale(1.06);
+    }
+
+    /* Footer */
+    footer {
+      position: relative;
+      z-index: 20;
+      height: 40px;
+      padding: 0 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--card-border);
+      background: #FFFFFF;
+      font-size: 0.8rem;
+      color: #64748B;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #059669;
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #059669;
+    }
+
+    .footer-keys {
+      display: flex;
+      gap: 8px;
+    }
+
+    .key-badge {
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: #0F172A;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Subtle ambient tint layer -->
+  <div class="ambient-canvas"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand-group">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+      </div>
+      <div class="brand-title">
+        EchoNet <span style="font-weight: 400; color: #64748B;">3.0</span>
+        <span class="brand-badge">DISASTER RELAY</span>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <span class="slide-counter" id="slideIndicator">SLIDE 01 / 07</span>
+      <button class="btn-ctrl active" id="btnSpinToggle" title="Toggle Slow Ambient Spin">
+        <span id="spinIcon">🔄</span> Auto-Spin
+      </button>
+      <button class="btn-ctrl" id="btnAudioToggle" title="Toggle Sound Feedback">
+        <span id="audioIcon">🔊</span> Sound
+      </button>
+      <button class="btn-ctrl" id="btnFullscreenToggle" title="Toggle Fullscreen (F)">
+        <span>⛶</span> Fullscreen
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Presentation Area -->
+  <main>
+    <!-- Left Slide Card Viewport -->
+    <div class="slide-viewport" id="slideViewport">
+      
+      <!-- Slide Header -->
+      <div class="slide-header">
+        <div class="slide-tag" id="slideTag">TOPIC 01 • OVERVIEW & TEAM IDENTITY</div>
+        <h1 class="slide-title" id="slideTitle">EchoNet 3.0</h1>
+        <div class="slide-subtitle" id="slideSubtitle">Offline Disaster Communication & Autonomous Rescue Relay</div>
+      </div>
+
+      <!-- SLIDE 1: Title & Team Name -->
+      <div class="slide-body active" id="slide-1">
+        <div class="team-box-clean">
+          <div class="team-box-label">
+            <span>TEAM IDENTITY (CLICK TO EDIT)</span>
+            <span style="font-size: 0.68rem; color: #64748B;">✏️ Auto-saved</span>
+          </div>
+          <input type="text" class="team-name-input" id="teamNameInput" value="Team EchoNet • Disaster Systems Innovation" placeholder="Click to enter your team name...">
+          <div class="team-pills">
+            <span class="team-pill-item">Mesh Protocol Architecture</span>
+            <span class="team-pill-item">Sub-5ms Edge AI Micro-Logistics</span>
+            <span class="team-pill-item">ECDSA P-256 Cryptography & GIS</span>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top: 0.2rem;">
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">⚡</span>
+              <span class="card-title">Zero-Infrastructure</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Multi-bearer <strong>BLE + Wi-Fi Direct</strong> store-and-forward mesh.</li>
+              <li>Epidemic TTL routing operates with <strong>0% internet, SIM, or towers</strong>.</li>
+            </ul>
+            <div class="card-tag">P2P MESH</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🛡️</span>
+              <span class="card-title">ECDSA P-256 Security</span>
+            </div>
+            <ul class="card-bullets">
+              <li>On-device <strong>NIST P-256 digital signatures</strong> on all packets.</li>
+              <li>Prevents rogue nodes from altering GPS or spoofing alarms.</li>
+            </ul>
+            <div class="card-tag">ANTI-TAMPER</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🌐</span>
+              <span class="card-title">Cross-Platform Ready</span>
+            </div>
+            <ul class="card-bullets">
+              <li><strong>Android APK</strong> (7.9 MB Room DB) + <strong>Offline Web Bluetooth</strong>.</li>
+              <li>FastAPI gateway station on port 8000 with real-time GIS map.</li>
+            </ul>
+            <div class="card-tag">DEPLOYED MVP</div>
+          </div>
+        </div>
+
+        <div class="highlight-banner">
+          <span>🎯</span>
+          <div><strong>Core Mission:</strong> Turn 3+ billion standard civilian smartphones into a secure, tamper-proof survival mesh when all infrastructure collapses.</div>
+        </div>
+      </div>
+
+      <!-- SLIDE 2: Problem Statement -->
+      <div class="slide-body" id="slide-2">
+        <div class="grid-3">
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🌊</span>
+              <span class="card-title">1. Total Grid Collapse</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Floods and cyclones knock out cellular towers and fiber backbones in minutes.</li>
+              <li>Backup generators deplete, plunging entire districts into communication blackout.</li>
+            </ul>
+            <div class="card-tag">INFRASTRUCTURE LOSS</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">⏳</span>
+              <span class="card-title">2. Golden 72h Blindness</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Over <strong>80% of disaster fatalities</strong> occur within the first 72 hours.</li>
+              <li>Search and rescue teams navigate flooded waters blind without victim GPS fixes.</li>
+            </ul>
+            <div class="card-tag">SEARCH DELAYS</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">⚠️</span>
+              <span class="card-title">3. Chaos & Spoofing</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Unverified reports and fake panic alarms waste scarce rescue boat dispatches.</li>
+              <li>Commercial apps (WhatsApp) are hardcoded to fail offline without 4G/5G.</li>
+            </ul>
+            <div class="card-tag">TAMPER & DISPATCH CHAOS</div>
+          </div>
+        </div>
+
+        <div class="highlight-banner" style="margin-top: 1rem;">
+          <span>❗</span>
+          <div><strong>Problem Statement:</strong> Stranded disaster victims possess working phones with GPS and radios, but zero connectivity to transmit verified emergency coordinates to rescue command stations.</div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3: Proposed Solution -->
+      <div class="slide-body" id="slide-3">
+        <div class="grid-3">
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">📡</span>
+              <span class="card-title">1. Multi-Bearer Mesh</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Direct phone-to-phone <strong>BLE + Wi-Fi Direct</strong> via Google Nearby Connections.</li>
+              <li>Zero cellular data, zero SIM card, and zero cloud reliance.</li>
+            </ul>
+            <div class="card-tag">OFFLINE RELAY</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🔄</span>
+              <span class="card-title">2. Store & Forward Engine</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Phones automatically relay emergency packets in the background.</li>
+              <li>Queues out-of-range packets in Room SQLite; syncs seamlessly on contact.</li>
+            </ul>
+            <div class="card-tag">DATA MULE SYNC</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🛡️</span>
+              <span class="card-title">3. Immutable Truth</span>
+            </div>
+            <ul class="card-bullets">
+              <li>On-device <strong>ECDSA P-256 signatures</strong> over canonical payload digests.</li>
+              <li>Victim GPS, timestamp, and device ID cannot be forged or altered across hops.</li>
+            </ul>
+            <div class="card-tag">CRYPTOGRAPHIC INTEGRITY</div>
+          </div>
+        </div>
+
+        <div class="highlight-banner" style="margin-top: 1rem;">
+          <span>💡</span>
+          <div><strong>The Core Idea:</strong> An autonomous survival network turning walking volunteers, relief boats, and drones into trusted data mules—bridging isolated victims directly to the incident command map.</div>
+        </div>
+      </div>
+
+      <!-- SLIDE 4: Technical Approach -->
+      <div class="slide-body" id="slide-4">
+        <div class="grid-3">
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🧠</span>
+              <span class="card-title">1. <4ms Edge AI Engine</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Deterministic, zero-cloud NLP executing in <strong><4ms with <2MB RAM</strong>.</li>
+              <li>Auto-scores hazards (0–100) and extracts demographic headcounts.</li>
+            </ul>
+            <div class="card-tag">ON-DEVICE AI</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🚤</span>
+              <span class="card-title">2. Auto Vehicle Routing</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Autonomously resolves emergency response fleet units:</li>
+              <li><code>RESCUE_BOAT</code> • <code>DRONE_AIRDROP</code> • <code>WATER_AMBULANCE</code>.</li>
+            </ul>
+            <div class="card-tag">MICRO-LOGISTICS</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🧪</span>
+              <span class="card-title">3. Production MVP Ready</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Native Kotlin APK (7.9 MB), Room SQLite, and FastAPI local gateway.</li>
+              <li><strong>13 automated test suites passed</strong>; verified on 3-phone daisy chains.</li>
+            </ul>
+            <div class="card-tag">100% OPERATIONAL</div>
+          </div>
+        </div>
+
+        <div class="highlight-banner" style="margin-top: 1rem;">
+          <span>🚀</span>
+          <div><strong>Feasibility Confirmed:</strong> Zero theoretical conjecture. Fully functional edge architecture verified in real physical multi-phone daisy chains.</div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: Business Approach -->
+      <div class="slide-body" id="slide-5">
+        <div class="grid-3">
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🏢</span>
+              <span class="card-title">1. Target Customers</span>
+            </div>
+            <ul class="card-bullets">
+              <li><strong>B2G (Primary):</strong> Disaster Management Authorities (NDMA, FEMA, SDRF).</li>
+              <li><strong>B2B:</strong> International NGOs (Red Cross), offshore oil rigs, mining fleets.</li>
+              <li><strong>B2C:</strong> Civilian population in coastal floodplains & seismic zones.</li>
+            </ul>
+            <div class="card-tag">MARKET SEGMENTS</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">💰</span>
+              <span class="card-title">2. Revenue Model</span>
+            </div>
+            <ul class="card-bullets">
+              <li><strong>Command Station Hardware:</strong> Turnkey rugged laptops & gateway boxes.</li>
+              <li><strong>Disaster Readiness SLAs:</strong> Annual contracts for drills & maintenance.</li>
+              <li><strong>Enterprise Integration:</strong> Custom private mesh SDK licensing.</li>
+            </ul>
+            <div class="card-tag">HIGH-MARGIN HYBRID</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">📈</span>
+              <span class="card-title">3. Go-to-Market (GTM)</span>
+            </div>
+            <ul class="card-bullets">
+              <li><strong>Phase 1:</strong> Pilot deployments during municipal flood/cyclone drills.</li>
+              <li><strong>Phase 2:</strong> Pre-installation partnerships with state civil defense.</li>
+              <li><strong>Phase 3:</strong> Open protocol standard for national disaster mandates.</li>
+            </ul>
+            <div class="card-tag">SCALABLE ROADMAP</div>
+          </div>
+        </div>
+
+        <div class="highlight-banner" style="margin-top: 1rem;">
+          <span>💼</span>
+          <div><strong>Commercial Success:</strong> Free citizen app guarantees viral adoption, while enterprise command station hardware and municipal SLAs generate recurring revenue.</div>
+        </div>
+      </div>
+
+      <!-- SLIDE 6: Expected Impact & UN SDGs -->
+      <div class="slide-body" id="slide-6">
+        <div class="grid-3">
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">⏱️</span>
+              <span class="card-title">1. 70% Faster Rescue</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Pinpoints exact victim GPS coordinates to rescue squads.</li>
+              <li>Ends blind search in floodwaters, saving lives in the Golden 72h.</li>
+            </ul>
+            <div class="card-tag">RAPID TRIAGE</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🌾</span>
+              <span class="card-title">2. UN SDG 2: Zero Hunger</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Calculates survival provisions via <strong>Sphere Standards</strong>.</li>
+              <li>3L potable water/person/day, infant formula, ORS & cold insulin.</li>
+            </ul>
+            <div class="card-tag">SPHERE COMPLIANT</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🌊</span>
+              <span class="card-title">3. UN SDG 13: Climate</span>
+            </div>
+            <ul class="card-bullets">
+              <li>Mitigates extreme flood inundation through roof entrapment detection.</li>
+              <li>Coordinates autonomous waterborne rescue boat dispatch.</li>
+            </ul>
+            <div class="card-tag">CLIMATE RESILIENCE</div>
+          </div>
+        </div>
+
+        <div class="highlight-banner" style="margin-top: 1rem;">
+          <span>🌟</span>
+          <div><strong>Humanitarian Difference:</strong> In past catastrophes, thousands were stranded on rooftops with working phones but zero signal. EchoNet 3.0 bridges that fatal gap.</div>
+        </div>
+      </div>
+
+      <!-- SLIDE 7: Challenges & Risks -->
+      <div class="slide-body" id="slide-7">
+        <div class="grid-3">
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">📡</span>
+              <span class="card-title">1. Radio Range (~30-70m)</span>
+            </div>
+            <ul class="card-bullets">
+              <li><strong>Challenge:</strong> Signals attenuated by concrete, water, and debris.</li>
+              <li><strong>Mitigation:</strong> Store-and-forward "Data Mules." Walking relief volunteers, boats, and drones carry packets across clusters.</li>
+            </ul>
+            <div class="card-tag">PHYSICAL RF LIMITS</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🔋</span>
+              <span class="card-title">2. Battery Depletion</span>
+            </div>
+            <ul class="card-bullets">
+              <li><strong>Challenge:</strong> Continuous discovery can drain phone battery.</li>
+              <li><strong>Mitigation:</strong> Adaptive duty-cycling (15s burst / 45s sleep) + optimized foreground services.</li>
+            </ul>
+            <div class="card-tag">POWER CONSERVATION</div>
+          </div>
+
+          <div class="card-clean">
+            <div class="card-header-line">
+              <span class="card-icon">🔒</span>
+              <span class="card-title">3. Storms & Fake Alerts</span>
+            </div>
+            <ul class="card-bullets">
+              <li><strong>Challenge:</strong> Packet broadcast storms and malicious hoax alarms.</li>
+              <li><strong>Mitigation:</strong> SHA-256 deduplication cache + ECDSA P-256 cryptographic coordinator authority keys.</li>
+            </ul>
+            <div class="card-tag">NETWORK SECURITY</div>
+          </div>
+        </div>
+
+        <div class="highlight-banner" style="margin-top: 1rem;">
+          <span>✅</span>
+          <div><strong>Pragmatic Engineering:</strong> Every physical and protocol limitation has been proactively designed with software fallbacks and field-tested mitigations.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Side: Enlarged Interactive Rotating Wheel Compass -->
+    <div class="wheel-viewport">
+      <div class="wheel-container" id="wheelContainer">
+        
+        <!-- Outer Compass Ring -->
+        <div class="wheel-outer-ring"></div>
+
+        <!-- Top Pointer Needle (12 o'clock) -->
+        <div class="wheel-pointer" id="wheelPointer"></div>
+
+        <!-- Center Hub with Slide Number -->
+        <div class="wheel-center-hub" id="wheelHub">
+          <div class="hub-number" id="hubNumber">01</div>
+          <div class="hub-label" id="hubLabel">OVERVIEW</div>
+        </div>
+
+        <!-- The Enlarged SVG Wheel: 7 Sectors (360 / 7 = 51.42857 deg each) -->
+        <svg class="svg-wheel" id="interactiveWheel" viewBox="-230 -230 460 460">
+          <g id="wheelSlicesGroup"></g>
+        </svg>
+
+      </div>
+
+      <!-- Controls Below Wheel -->
+      <div class="wheel-controls">
+        <div class="wheel-hint">
+          <span>🔄</span> Click any slice to stop idle spin & open topic
+        </div>
+        <div class="wheel-nav-buttons">
+          <button class="btn-nav" id="btnPrevSlide" title="Previous Slide (Left Arrow)">◀</button>
+          <button class="btn-nav" id="btnNextSlide" title="Next Slide (Right Arrow)">▶</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Status Footer -->
+  <footer>
+    <div class="footer-left">
+      <div class="footer-status-pill">
+        <div class="status-dot"></div>
+        <span>MESH ENGINE OPERATIONAL</span>
+      </div>
+      <span>•</span>
+      <span>Sub-5ms AI Micro-Logistics Active</span>
+      <span>•</span>
+      <span>ECDSA NIST P-256 Enabled</span>
+    </div>
+
+    <div class="footer-keys">
+      <span>Keys:</span>
+      <span class="key-badge">1-7</span> Jump Topic
+      <span class="key-badge">◀ ▶</span> Navigate
+      <span class="key-badge">Space</span> Next
+      <span class="key-badge">F</span> Fullscreen
+    </div>
+  </footer>
+
+  <script>
+    /* ==========================================================================
+       ECHONET 3.0 ENGINE: ENLARGED WHEEL WITH CONTINUOUS IDLE ROTATION
+       ========================================================================== */
+
+    const SLIDES = [
+      {
+        id: 1,
+        shortTitle: "Overview",
+        fullTitle: "EchoNet 3.0",
+        subtitle: "Offline Emergency Mesh & Autonomous Rescue Relay",
+        tag: "TOPIC 01 • OVERVIEW & TEAM IDENTITY",
+        primaryColor: "#0284C7",
+        accentColor: "#0EA5E9",
+        lightColor: "rgba(2, 132, 199, 0.08)",
+        glowColor: "rgba(2, 132, 199, 0.25)",
+        bgTint: "radial-gradient(circle at 75% 25%, rgba(2, 132, 199, 0.08) 0%, rgba(248, 250, 252, 1) 70%)"
+      },
+      {
+        id: 2,
+        shortTitle: "Problem",
+        fullTitle: "Problem Statement",
+        subtitle: "Disaster Blackout & The Golden 72 Hours Information Vacuum",
+        tag: "TOPIC 02 • THE CRITICAL CHALLENGE",
+        primaryColor: "#DC2626",
+        accentColor: "#EF4444",
+        lightColor: "rgba(220, 38, 38, 0.08)",
+        glowColor: "rgba(220, 38, 38, 0.25)",
+        bgTint: "radial-gradient(circle at 75% 25%, rgba(220, 38, 38, 0.08) 0%, rgba(248, 250, 252, 1) 70%)"
+      },
+      {
+        id: 3,
+        shortTitle: "Solution",
+        fullTitle: "Proposed Solution",
+        subtitle: "Zero-Internet Phone-to-Phone Mesh & Preservation of Truth",
+        tag: "TOPIC 03 • THE CORE INNOVATION",
+        primaryColor: "#EA580C",
+        accentColor: "#F97316",
+        lightColor: "rgba(234, 88, 12, 0.08)",
+        glowColor: "rgba(234, 88, 12, 0.25)",
+        bgTint: "radial-gradient(circle at 75% 25%, rgba(234, 88, 12, 0.08) 0%, rgba(248, 250, 252, 1) 70%)"
+      },
+      {
+        id: 4,
+        shortTitle: "Tech Stack",
+        fullTitle: "Technical Approach",
+        subtitle: "Sub-5ms Edge AI, ECDSA P-256 Integrity & Verified MVP",
+        tag: "TOPIC 04 • ENGINEERING & EDGE AI",
+        primaryColor: "#059669",
+        accentColor: "#10B981",
+        lightColor: "rgba(5, 150, 105, 0.08)",
+        glowColor: "rgba(5, 150, 105, 0.25)",
+        bgTint: "radial-gradient(circle at 75% 25%, rgba(5, 150, 105, 0.08) 0%, rgba(248, 250, 252, 1) 70%)"
+      },
+      {
+        id: 5,
+        shortTitle: "Business",
+        fullTitle: "Business Approach",
+        subtitle: "Target Customers, Sustainable Revenue Model & GTM Strategy",
+        tag: "TOPIC 05 • COMMERCIAL VIABILITY",
+        primaryColor: "#4F46E5",
+        accentColor: "#6366F1",
+        lightColor: "rgba(79, 70, 229, 0.08)",
+        glowColor: "rgba(79, 70, 229, 0.25)",
+        bgTint: "radial-gradient(circle at 75% 25%, rgba(79, 70, 229, 0.08) 0%, rgba(248, 250, 252, 1) 70%)"
+      },
+      {
+        id: 6,
+        shortTitle: "Impact",
+        fullTitle: "Expected Impact & UN SDGs",
+        subtitle: "70% Faster Rescue Locating & UN SDG 2/13 Humanitarian Standards",
+        tag: "TOPIC 06 • LIFESAVING OUTCOMES",
+        primaryColor: "#0D9488",
+        accentColor: "#14B8A6",
+        lightColor: "rgba(13, 148, 136, 0.08)",
+        glowColor: "rgba(13, 148, 136, 0.25)",
+        bgTint: "radial-gradient(circle at 75% 25%, rgba(13, 148, 136, 0.08) 0%, rgba(248, 250, 252, 1) 70%)"
+      },
+      {
+        id: 7,
+        shortTitle: "Risks",
+        fullTitle: "Challenges & Risks",
+        subtitle: "Radio Range, Battery Depletion, Broadcast Storms & Mitigations",
+        tag: "TOPIC 07 • PRAGMATIC ENGINEERING",
+        primaryColor: "#C026D3",
+        accentColor: "#D946EF",
+        lightColor: "rgba(192, 38, 211, 0.08)",
+        glowColor: "rgba(192, 38, 211, 0.25)",
+        bgTint: "radial-gradient(circle at 75% 25%, rgba(192, 38, 211, 0.08) 0%, rgba(248, 250, 252, 1) 70%)"
+      }
+    ];
+
+    let currentSlideIndex = 0;
+    let currentWheelRotation = 0;
+    let isAmbientSpinning = true;
+    let ambientSpeed = 0.08; // Very slow, graceful continuous rotation (~4.8 deg/sec)
+    let animationFrameId = null;
+    let isTransitioning = false;
+    let audioEnabled = true;
+
+    // Web Audio Synthesizer for UI click
+    let audioCtx = null;
+    function playClickSound() {
+      if (!audioEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(640, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(840, audioCtx.currentTime + 0.03);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.04);
+      } catch (e) {}
+    }
+
+    // Geometry Helpers for 7-Segment SVG Wheel
+    const TOTAL_SLICES = 7;
+    const SLICE_ANGLE = 360 / TOTAL_SLICES; // ~51.42857 deg
+    const OUTER_RADIUS = 222;
+    const INNER_RADIUS = 86;
+
+    function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+      const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+      return {
+        x: centerX + (radius * Math.cos(angleInRadians)),
+        y: centerY + (radius * Math.sin(angleInRadians))
+      };
+    }
+
+    function describeDonutSegment(x, y, innerRadius, outerRadius, startAngle, endAngle) {
+      const startOuter = polarToCartesian(x, y, outerRadius, endAngle);
+      const endOuter = polarToCartesian(x, y, outerRadius, startAngle);
+      const startInner = polarToCartesian(x, y, innerRadius, endAngle);
+      const endInner = polarToCartesian(x, y, innerRadius, startAngle);
+      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+      return [
+        "M", startOuter.x, startOuter.y,
+        "A", outerRadius, outerRadius, 0, largeArcFlag, 0, endOuter.x, endOuter.y,
+        "L", endInner.x, endInner.y,
+        "A", innerRadius, innerRadius, 0, largeArcFlag, 1, startInner.x, startInner.y,
+        "Z"
+      ].join(" ");
+    }
+
+    // Render the Enlarged SVG Wheel Sectors
+    function initWheelSVG() {
+      const group = document.getElementById("wheelSlicesGroup");
+      group.innerHTML = "";
+
+      SLIDES.forEach((slide, i) => {
+        const startAngle = (i * SLICE_ANGLE) - (SLICE_ANGLE / 2);
+        const endAngle = (i * SLICE_ANGLE) + (SLICE_ANGLE / 2);
+        const midAngle = i * SLICE_ANGLE;
+
+        const pathData = describeDonutSegment(0, 0, INNER_RADIUS, OUTER_RADIUS, startAngle, endAngle);
+
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", "wheel-sector");
+        g.setAttribute("id", `wheel-sector-${i}`);
+        g.addEventListener("click", () => selectTopic(i));
+
+        // Slice Path
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", pathData);
+        path.setAttribute("fill", slide.primaryColor);
+        path.setAttribute("stroke", "#FFFFFF");
+        path.setAttribute("stroke-width", "3");
+        path.setAttribute("opacity", "0.92");
+        g.appendChild(path);
+
+        // Center calculation for Text & Number
+        const textPos = polarToCartesian(0, 0, (INNER_RADIUS + OUTER_RADIUS) / 2, midAngle);
+
+        // Number label (01, 02...)
+        const textNum = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textNum.setAttribute("x", textPos.x);
+        textNum.setAttribute("y", textPos.y - 6);
+        textNum.setAttribute("text-anchor", "middle");
+        textNum.setAttribute("fill", "#FFFFFF");
+        textNum.setAttribute("font-size", "17px");
+        textNum.setAttribute("font-weight", "900");
+        textNum.setAttribute("font-family", "JetBrains Mono, monospace");
+        textNum.textContent = `0${slide.id}`;
+
+        let rotationAngle = midAngle;
+        if (rotationAngle > 90 && rotationAngle < 270) {
+          rotationAngle += 180;
+        }
+        textNum.setAttribute("transform", `rotate(${rotationAngle}, ${textPos.x}, ${textPos.y - 6})`);
+        g.appendChild(textNum);
+
+        // Short Title Label
+        const textTitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textTitle.setAttribute("x", textPos.x);
+        textTitle.setAttribute("y", textPos.y + 12);
+        textTitle.setAttribute("text-anchor", "middle");
+        textTitle.setAttribute("fill", "#FFFFFF");
+        textTitle.setAttribute("font-size", "11px");
+        textTitle.setAttribute("font-weight", "700");
+        textTitle.setAttribute("font-family", "Inter, sans-serif");
+        textTitle.textContent = slide.shortTitle.toUpperCase();
+        textTitle.setAttribute("transform", `rotate(${rotationAngle}, ${textPos.x}, ${textPos.y + 12})`);
+        g.appendChild(textTitle);
+
+        group.appendChild(g);
+      });
+    }
+
+    // Continuous Slow Idle Rotation Loop
+    function runAmbientLoop() {
+      if (isAmbientSpinning && !isTransitioning) {
+        currentWheelRotation += ambientSpeed;
+        const wheel = document.getElementById("interactiveWheel");
+        wheel.style.transition = "none"; // Direct frame transform for smooth physics
+        wheel.style.transform = `rotate(${currentWheelRotation}deg)`;
+
+        // Find which sector is currently closest to the top needle (12 o'clock = 0 deg)
+        let normalized = ((-currentWheelRotation) % 360 + 360) % 360;
+        let activeIdx = Math.round(normalized / SLICE_ANGLE) % TOTAL_SLICES;
+
+        // Keep hub indicator aligned with whichever sector is passing under top needle
+        const currentPassingSlide = SLIDES[activeIdx];
+        document.getElementById("hubNumber").textContent = `0${currentPassingSlide.id}`;
+        document.getElementById("hubNumber").style.color = currentPassingSlide.primaryColor;
+        document.getElementById("hubLabel").textContent = currentPassingSlide.shortTitle.toUpperCase();
+      }
+      animationFrameId = requestAnimationFrame(runAmbientLoop);
+    }
+
+    // Select Topic on Slice Click (Stops Ambient Spin & Aligns Exact Slice Under Needle)
+    function selectTopic(targetIndex) {
+      if (targetIndex < 0) targetIndex = TOTAL_SLICES - 1;
+      if (targetIndex >= TOTAL_SLICES) targetIndex = 0;
+
+      playClickSound();
+
+      // Pause ambient spin so user can inspect this topic
+      isAmbientSpinning = false;
+      updateSpinButtonState();
+      isTransitioning = true;
+
+      currentSlideIndex = targetIndex;
+      const slide = SLIDES[targetIndex];
+
+      // Calculate shortest rotational path so slice aligns directly at 12 o'clock needle
+      const targetDeg = -(targetIndex * SLICE_ANGLE);
+      let diff = (targetDeg - currentWheelRotation) % 360;
+      if (diff > 180) diff -= 360;
+      if (diff < -180) diff += 360;
+      currentWheelRotation += diff;
+
+      // Animate smoothly to target angle
+      const wheel = document.getElementById("interactiveWheel");
+      wheel.style.transition = "transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1)";
+      wheel.style.transform = `rotate(${currentWheelRotation}deg)`;
+
+      // Update Hub & Colors
+      document.getElementById("hubNumber").textContent = `0${slide.id}`;
+      document.getElementById("hubNumber").style.color = slide.primaryColor;
+      document.getElementById("hubLabel").textContent = slide.shortTitle.toUpperCase();
+
+      document.documentElement.style.setProperty('--theme-primary', slide.primaryColor);
+      document.documentElement.style.setProperty('--theme-accent', slide.accentColor);
+      document.documentElement.style.setProperty('--theme-light', slide.lightColor);
+      document.documentElement.style.setProperty('--theme-glow', slide.glowColor);
+      document.documentElement.style.setProperty('--theme-bg-tint', slide.bgTint);
+
+      // Update Header Text
+      document.getElementById("slideIndicator").textContent = `SLIDE 0${slide.id} / 0${TOTAL_SLICES}`;
+      document.getElementById("slideTag").textContent = slide.tag;
+      document.getElementById("slideTitle").textContent = slide.fullTitle;
+      document.getElementById("slideSubtitle").textContent = slide.subtitle;
+
+      // Highlight active sector in SVG
+      SLIDES.forEach((_, idx) => {
+        const sector = document.getElementById(`wheel-sector-${idx}`);
+        if (sector) {
+          if (idx === targetIndex) {
+            sector.querySelector("path").setAttribute("opacity", "1.0");
+            sector.querySelector("path").setAttribute("stroke", "#0F172A");
+            sector.querySelector("path").setAttribute("stroke-width", "4");
+          } else {
+            sector.querySelector("path").setAttribute("opacity", "0.78");
+            sector.querySelector("path").setAttribute("stroke", "#FFFFFF");
+            sector.querySelector("path").setAttribute("stroke-width", "3");
+          }
+        }
+      });
+
+      // Switch Slide Content
+      document.querySelectorAll(".slide-body").forEach((el, idx) => {
+        if (idx === targetIndex) {
+          el.classList.add("active");
+        } else {
+          el.classList.remove("active");
+        }
+      });
+
+      setTimeout(() => {
+        isTransitioning = false;
+      }, 850);
+    }
+
+    // Toggle Ambient Spin
+    function toggleAmbientSpin() {
+      isAmbientSpinning = !isAmbientSpinning;
+      updateSpinButtonState();
+    }
+
+    function updateSpinButtonState() {
+      const btn = document.getElementById("btnSpinToggle");
+      if (isAmbientSpinning) {
+        btn.classList.add("active");
+        btn.innerHTML = `<span>🔄</span> Auto-Spin: ON`;
+      } else {
+        btn.classList.remove("active");
+        btn.innerHTML = `<span>▶</span> Auto-Spin: OFF`;
+      }
+    }
+
+    // Fullscreen Toggle
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // Local Storage for Team Name persistence
+    const teamInput = document.getElementById("teamNameInput");
+    const savedTeam = localStorage.getItem("echonet_pro_team_name");
+    if (savedTeam) teamInput.value = savedTeam;
+    teamInput.addEventListener("input", (e) => {
+      localStorage.setItem("echonet_pro_team_name", e.target.value);
+    });
+
+    // Keyboard Controls
+    window.addEventListener("keydown", (e) => {
+      if (document.activeElement === teamInput) return;
+
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+        selectTopic(currentSlideIndex + 1);
+      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        selectTopic(currentSlideIndex - 1);
+      } else if (e.key >= "1" && e.key <= "7") {
+        selectTopic(parseInt(e.key) - 1);
+      } else if (e.key.toLowerCase() === "f") {
+        toggleFullscreen();
+      } else if (e.key.toLowerCase() === "s") {
+        toggleAmbientSpin();
+      }
+    });
+
+    // Button event listeners
+    document.getElementById("btnPrevSlide").addEventListener("click", () => selectTopic(currentSlideIndex - 1));
+    document.getElementById("btnNextSlide").addEventListener("click", () => selectTopic(currentSlideIndex + 1));
+    document.getElementById("btnSpinToggle").addEventListener("click", toggleAmbientSpin);
+    document.getElementById("btnFullscreenToggle").addEventListener("click", toggleFullscreen);
+    document.getElementById("btnAudioToggle").addEventListener("click", () => {
+      audioEnabled = !audioEnabled;
+      document.getElementById("audioIcon").textContent = audioEnabled ? "🔊" : "🔇";
+      document.getElementById("btnAudioToggle").style.opacity = audioEnabled ? "1" : "0.5";
+    });
+
+    // Initialize Wheel on Load
+    initWheelSVG();
+    selectTopic(0);
+    runAmbientLoop();
+  </script>
+</body>
+</html>
